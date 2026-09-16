@@ -62,6 +62,9 @@ function App() {
         .from('jobs')
         .select('*')
         .order('id', { ascending: false })
+      if (error) {
+        console.error('Supabase fetch error:', error)
+      }
       if (!error && data) {
         setJobs(data.map(fromDB))
         localStorage.setItem('job-tracker-jobs', JSON.stringify(data.map(fromDB)))
@@ -106,13 +109,24 @@ function App() {
     e.preventDefault()
     if (!form.company.trim()) return
 
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+
     if (editingId) {
       const updated = { ...form, company: form.company.trim() }
       const { error } = await supabase.from('jobs').update(toDB(updated)).eq('id', editingId)
-      if (!error) {
-        setJobs(prev => prev.map(j => j.id === editingId ? { ...j, ...updated } : j))
-        cancelForm()
+      if (error) {
+        console.error('Supabase update error:', error)
+        Swal.fire({
+          icon: 'error',
+          title: 'Update Failed',
+          text: error.message || 'Failed to update job in Supabase.',
+          background: isDark ? '#25253e' : '#ffffff',
+          color: isDark ? '#d0d0e0' : '#4a4a4a',
+        })
+        return
       }
+      setJobs(prev => prev.map(j => j.id === editingId ? { ...j, ...updated } : j))
+      cancelForm()
     } else {
       const newJob = {
         ...form,
@@ -121,10 +135,19 @@ function App() {
         createdAt: new Date().toISOString(),
       }
       const { error } = await supabase.from('jobs').insert(toDB(newJob))
-      if (!error) {
-        setJobs(prev => [newJob, ...prev])
-        cancelForm()
+      if (error) {
+        console.error('Supabase insert error:', error)
+        Swal.fire({
+          icon: 'error',
+          title: 'Save Failed',
+          text: error.message || 'Failed to save job in Supabase.',
+          background: isDark ? '#25253e' : '#ffffff',
+          color: isDark ? '#d0d0e0' : '#4a4a4a',
+        })
+        return
       }
+      setJobs(prev => [newJob, ...prev])
+      cancelForm()
     }
   }
 
@@ -149,7 +172,18 @@ function App() {
     })
     if (!result.isConfirmed) return
     const { error } = await supabase.from('jobs').delete().eq('id', id)
-    if (!error) setJobs(prev => prev.filter(job => job.id !== id))
+    if (error) {
+      console.error('Supabase delete error:', error)
+      Swal.fire({
+        icon: 'error',
+        title: 'Delete Failed',
+        text: error.message || 'Failed to delete job from Supabase.',
+        background: isDark ? '#25253e' : '#ffffff',
+        color: isDark ? '#d0d0e0' : '#4a4a4a',
+      })
+      return
+    }
+    setJobs(prev => prev.filter(job => job.id !== id))
   }
 
   const getStatusStyle = (status) => {
