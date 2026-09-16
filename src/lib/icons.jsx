@@ -79,6 +79,12 @@ export const Search = () => (
   </svg>
 )
 
+export const AppliedDot = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="#1565c0">
+    <circle cx="12" cy="12" r="6" />
+  </svg>
+)
+
 export const PendingDot = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="#f57f17">
     <circle cx="12" cy="12" r="6" />

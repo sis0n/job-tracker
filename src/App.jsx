@@ -94,7 +94,6 @@ function App() {
     })
     setEditingId(job.id)
     setShowForm(true)
-    setExpandedId(null)
   }
 
   const cancelForm = () => {
@@ -155,17 +154,21 @@ function App() {
 
   const getStatusStyle = (status) => {
     switch(status) {
+      case 'applied': return { bg: '#e3f2fd', color: '#1565c0', border: '#42a5f5' }
       case 'accepted': return { bg: '#e8f5e9', color: '#2e7d32', border: '#4caf50' }
       case 'rejected': return { bg: '#fbe9e7', color: '#c62828', border: '#ef5350' }
+      case 'pending': return { bg: '#fff8e1', color: '#f57f17', border: '#ff9800' }
       default: return { bg: '#fff8e1', color: '#f57f17', border: '#ff9800' }
     }
   }
 
   const getStatusLabel = (status) => {
     switch(status) {
+      case 'applied': return 'Applied'
       case 'accepted': return 'Accepted'
       case 'rejected': return 'Rejected'
-      default: return 'Pending'
+      case 'pending': return 'Pending'
+      default: return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending'
     }
   }
 
@@ -259,6 +262,7 @@ function App() {
                 <label>Status</label>
                 <select name="status" value={form.status} onChange={handleChange}>
                   <option value="pending">Pending</option>
+                  <option value="applied">Applied</option>
                   <option value="accepted">Accepted</option>
                   <option value="rejected">Rejected</option>
                 </select>
