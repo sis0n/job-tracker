@@ -211,6 +211,81 @@
   height: 16px;
 }
 
+/* ─── Status Filter Tabs ─── */
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.filter-tab:hover {
+  border-color: var(--pink-300);
+  color: var(--text);
+}
+
+.filter-tab.active {
+  background: linear-gradient(135deg, var(--pink-400), var(--pink-500));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(233, 30, 99, 0.25);
+}
+
+.tab-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-applied { background: #1976d2; }
+.dot-pending { background: #f57f17; }
+.dot-accepted { background: #2e7d32; }
+.dot-rejected { background: #c62828; }
+
+.filter-tab.active .tab-dot {
+  background: white;
+}
+
+.filter-tab-count {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background: var(--tag-bg);
+  color: var(--text);
+  font-weight: 700;
+  transition: all var(--transition);
+}
+
+.filter-tab.active .filter-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
 /* ─── FAB ─── */
 .fab {
   position: fixed;

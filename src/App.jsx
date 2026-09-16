@@ -48,13 +48,14 @@ function App() {
   const [viewingJob, setViewingJob] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('job-tracker-welcomed'))
   const PER_PAGE = 12
 
   useEffect(() => {
     setPage(1)
-  }, [search])
+  }, [search, statusFilter])
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -186,29 +187,44 @@ function App() {
     setJobs(prev => prev.filter(job => job.id !== id))
   }
 
+  const BASE_STATUSES = ['applied', 'pending', 'accepted', 'rejected']
+
+  const STATUS_CONFIG = {
+    applied: { label: 'Applied', bg: '#e3f2fd', color: '#1565c0', border: '#42a5f5', dot: '#1976d2' },
+    pending: { label: 'Pending', bg: '#fff8e1', color: '#f57f17', border: '#ff9800', dot: '#f57f17' },
+    accepted: { label: 'Accepted', bg: '#e8f5e9', color: '#2e7d32', border: '#4caf50', dot: '#2e7d32' },
+    rejected: { label: 'Rejected', bg: '#fbe9e7', color: '#c62828', border: '#ef5350', dot: '#c62828' },
+  }
+
   const getStatusStyle = (status) => {
-    switch(status) {
-      case 'applied': return { bg: '#e3f2fd', color: '#1565c0', border: '#42a5f5' }
-      case 'accepted': return { bg: '#e8f5e9', color: '#2e7d32', border: '#4caf50' }
-      case 'rejected': return { bg: '#fbe9e7', color: '#c62828', border: '#ef5350' }
-      case 'pending': return { bg: '#fff8e1', color: '#f57f17', border: '#ff9800' }
-      default: return { bg: '#fff8e1', color: '#f57f17', border: '#ff9800' }
-    }
+    const key = (status || 'pending').toLowerCase()
+    return STATUS_CONFIG[key] || { bg: '#f3e5f5', color: '#7b1fa2', border: '#ab47bc', dot: '#7b1fa2' }
   }
 
   const getStatusLabel = (status) => {
-    switch(status) {
-      case 'applied': return 'Applied'
-      case 'accepted': return 'Accepted'
-      case 'rejected': return 'Rejected'
-      case 'pending': return 'Pending'
-      default: return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending'
-    }
+    if (!status) return 'Pending'
+    const key = status.toLowerCase()
+    if (STATUS_CONFIG[key]) return STATUS_CONFIG[key].label
+    return status.charAt(0).toUpperCase() + status.slice(1)
   }
 
-  const filteredJobs = search
-    ? jobs.filter(j => j.company.toLowerCase().includes(search.toLowerCase()))
-    : jobs
+  const availableStatuses = Array.from(
+    new Set([
+      ...BASE_STATUSES,
+      ...jobs.map(j => (j.status || '').toLowerCase()).filter(Boolean)
+    ])
+  )
+
+  const statusCounts = availableStatuses.reduce((acc, status) => {
+    acc[status] = jobs.filter(j => (j.status || 'pending').toLowerCase() === status).length
+    return acc
+  }, {})
+
+  const filteredJobs = jobs.filter(j => {
+    const matchesSearch = !search || j.company.toLowerCase().includes(search.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || (j.status || 'pending').toLowerCase() === statusFilter.toLowerCase()
+    return matchesSearch && matchesStatus
+  })
 
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / PER_PAGE))
   const currentPage = Math.min(page, totalPages)
@@ -266,6 +282,34 @@ function App() {
           )}
         </div>
 
+        <div className="filter-tabs">
+          <button
+            type="button"
+            className={`filter-tab ${statusFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('all')}
+          >
+            <span>All</span>
+            <span className="filter-tab-count">{jobs.length}</span>
+          </button>
+          {availableStatuses.map(status => {
+            const count = statusCounts[status] || 0
+            const style = getStatusStyle(status)
+            const isActive = statusFilter === status
+            return (
+              <button
+                key={status}
+                type="button"
+                className={`filter-tab ${isActive ? 'active' : ''}`}
+                onClick={() => setStatusFilter(status)}
+              >
+                <span className="tab-dot" style={{ background: isActive ? 'white' : style.dot || style.color }}></span>
+                <span>{getStatusLabel(status)}</span>
+                <span className="filter-tab-count">{count}</span>
+              </button>
+            )
+          })}
+        </div>
+
         <button className="fab" onClick={() => showForm ? cancelForm() : setShowForm(true)}>
           {showForm ? <Close /> : <Plus />}
         </button>
@@ -295,10 +339,11 @@ function App() {
               <div className="form-group">
                 <label>Status</label>
                 <select name="status" value={form.status} onChange={handleChange}>
-                  <option value="pending">Pending</option>
-                  <option value="applied">Applied</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="rejected">Rejected</option>
+                  {availableStatuses.map(status => (
+                    <option key={status} value={status}>
+                      {getStatusLabel(status)}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -364,8 +409,14 @@ function App() {
           {filteredJobs.length === 0 ? (
               <div className="empty-state">
               <div className="empty-icon"><Search /></div>
-              <h3>{search ? 'No results found' : 'No applications yet'}</h3>
-              <p>{search ? `No companies match "${search}"` : 'Tap the + button to start tracking your job applications!'}</p>
+              <h3>{search || statusFilter !== 'all' ? 'No results found' : 'No applications yet'}</h3>
+              <p>
+                {search
+                  ? `No companies match "${search}"`
+                  : statusFilter !== 'all'
+                  ? `No applications with status "${getStatusLabel(statusFilter)}"`
+                  : 'Tap the + button to start tracking your job applications!'}
+              </p>
             </div>
           ) : (
             <div className="jobs-container">
